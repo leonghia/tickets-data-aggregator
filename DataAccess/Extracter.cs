@@ -6,6 +6,12 @@ namespace TicketsDataAggregator.DataAccess
     public class Extracter
     {
         private readonly FileRepository _fileRepository;
+        private readonly Dictionary<string, CultureInfo> _countryCodes = new()
+        {
+            { "com", new CultureInfo("en-US") },
+            { "jp", new CultureInfo("ja-JP") },
+            { "fr", new CultureInfo("fr-FR") }
+        };
 
         public Extracter(FileRepository fileRepository)
         {
@@ -29,7 +35,7 @@ namespace TicketsDataAggregator.DataAccess
 
         }
 
-        private Movie ExtractMovie(string input)
+        private static Movie ExtractMovie(string input)
         {
             var title = input.Split("Date:")[0];
             var dateTime = input.Split("Date:")[1].Split("Time:");
@@ -44,7 +50,7 @@ namespace TicketsDataAggregator.DataAccess
             return movie;
         }
 
-        private IEnumerable<Movie> ExtractMovies(string pageText)
+        private static IEnumerable<Movie> ExtractMovies(string pageText)
         {
             var movies = new List<Movie>();
             var stringMovies = ExtractMoviesAsArrayOfString(pageText);
@@ -56,27 +62,22 @@ namespace TicketsDataAggregator.DataAccess
             return movies;
         }
 
-        private string[] ExtractMoviesAsArrayOfString(string pageText)
+        private static string[] ExtractMoviesAsArrayOfString(string pageText)
         {
             pageText = pageText.Split("Visit us:")[0];
             var stringMovies = pageText.Split("Title:");
             return stringMovies;
         }
 
-        private string ExtractCountry(string pageText)
+        private static string ExtractCountry(string pageText)
         {
             return pageText.Substring(pageText.LastIndexOf('.') + 1);
         }
+
         private Ticket ExtractTicket(string pageText)
-        {
-            var countryCultures = new Dictionary<string, string>
-        {
-            { "com", "en-US" },
-            { "jp", "ja-JP" },
-            { "fr",  "fr-FR"}
-        };
+        {  
             var country = ExtractCountry(pageText);
-            CultureInfo.CurrentCulture = new CultureInfo(countryCultures[country]);
+            CultureInfo.CurrentCulture = _countryCodes[country];
             var movies = ExtractMovies(pageText).ToList();
             var ticket = new Ticket
             {
